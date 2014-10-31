@@ -1,179 +1,10 @@
-% Hello, Rust!
+% More Rust
 
 ![rust logo](http://www.rust-lang.org/logos/rust-logo-256x256-blk.png)
 
 @steveklabnik
 
-# Meta
-
-Rust is a new programming language from Mozilla (and friends).
-
-Rust is a _low-level_ programming language that often feels like a _high level_
-one.
-
-Rust makes low-level programming **accessible** to those who haven't done it, and
-**safer** for those who have.
-
-# Tradeoffs
-
-![swift](swift.png)
-
-# Safety?
-
-Let's talk about **safety**.
-
-Low level programming has historically been very, very, very unsafe.
-
-# Safety?
-
-Here's some Ruby:
-
-```ruby
-v = [];
-
-v.push("Hello");
-
-x = v[0];
-
-v.push("world");
-
-puts x
-```
-
-# Safety?
-
-Here's some C++:
-
-```cpp
-#include<iostream>
-#include<vector>
-#include<string>
-
-int main() {
-    std::vector<std::string> v;
-
-    v.push_back("Hello");
-
-    std::string& x = v[0];
-
-    v.push_back("world");
-
-    std::cout << x;
-}
-```
-
-# Safety?
-
-```bash
-$ g++ hello.cpp -Wall -Werror
-$ ./a.out 
-Segmentation fault (core dumped)
-```
-
-# Safety?
-
-```cpp
-int main() {
-    std::vector<std::string> v;
-```
-
-| location | name | value |
-|----------|------|-------|
-| 0x30     | v    |       |
-
-
-# Safety?
-
-```cpp
-v.push_back("Hello");
-```
-
-| location | name | value    |
-|----------|------|----------|
-| 0x30     | v    | 0x18     |
-| 0x18     |      | "Hello"  |
-
-# Safety?
-
-```cpp
-std::string& x = v[0];
-```
-
-| location | name | value    |
-|----------|------|----------|
-| 0x30     | v    | 0x18     |
-| 0x18     |      | "Hello"  |
-| 0x14     | x    | 0x18     |
-
-
-# Safety?
-
-```cpp
-v.push_back("world");
-```
-
-| location | name | value    |
-|----------|------|----------|
-| 0x30     | v    | 0x08     |
-| 0x18     |      | GARBAGE  |
-| 0x14     | x    | 0x18     |
-| 0x08     |      | "Hello"  |
-| 0x04     |      | "world"  |
-
-# Safety?
-
-> If the new `size()` is greater than `capacity()` then all iterators and
-> references (including the past-the-end iterator) are invalidated.
-
-# Safety?
-
-```{rust,ignore}
-fn main() {
-    let mut v = vec![];
-
-    v.push("Hello");
-
-    let x = &v[0];
-
-    v.push("world");
-
-    println!("{}", x);
-}
-```
-
-# Safety?
-
-```{notrust,ignore}
-error: cannot borrow `v` as mutable because it is also borrowed as immutable
-v.push("world");
-^
-```
-
-# Safety?
-
-```{notrust,ignore}
-note: previous borrow of `v` occurs here; the immutable borrow prevents subsequent moves or mutable borrows of `v` until the borrow ends
-let x = &v[0];
-^
-```
-
-# Safety?
-
-```{rust}
-fn main() {
-    let mut v = vec![];
-
-    v.push("Hello");
-
-    let x = v[0].clone();
-
-    v.push("world");
-
-    println!("{}", x);
-}
-```
-
-# Safety?
+# Ownership and Concurrency
 
 ```{rust,ignore}
 fn main() {
@@ -189,7 +20,7 @@ fn main() {
 }
 ```
 
-# Safety?
+# Ownership and Concurrency
 
 ```{notrust,ignore}
 6:71 error: capture of moved value: `numbers`
@@ -199,7 +30,7 @@ fn main() {
     spawn(proc() {
 ```
 
-# Safety?
+# Ownership and Concurrency
 
 ```rust
 use std::sync::{Arc,Mutex};
@@ -221,7 +52,7 @@ fn main() {
 }
 ```
 
-# Safety?
+# Ownership and Concurrency
 
 ```{rust,ignore}
 fn main() {
@@ -237,7 +68,7 @@ fn main() {
 }
 ```
 
-# Safety?
+# Ownership and Concurrency
 
 ```{rust,ignore}
 spawn(proc() {
@@ -249,93 +80,108 @@ spawn(proc() {
 });
 ```
 
-# Accessibility
+# Channels
 
-Systems programming has kept the same tools for decades.
-
-Rust uses tooling that is inspired by Ruby and JavaScript.
-
-# Cargo
-
-```{bash}
-$ cargo new hello_world --bin
-$ cd hello_world
-$ tree .
-.
-├── Cargo.toml
-└── src
-    └── main.rs
-
-1 directory, 2 files
-```
-
-# Cargo
-
-```{toml}
-[package]
-
-name = "hello_world"
-version = "0.0.1"
-authors = ["Your Name <you@example.com>"]
-```
-
-```{rust}
+```{rust,ignore}
 fn main() {
-    println!("Hello, world!")
+    let (tx, rx) = channel();
+
+    spawn(proc() {
+        tx.send(10i);
+    });
+
+    assert_eq!(rx.recv(), 10i);
 }
 ```
 
-# Cargo
+# Channels
 
-```{bash}
-$ cargo run
-   Compiling hello_world v0.0.1 (file:///Users/you/src/hello_world)
-     Running `target/hello_world`
-Hello, world!
-```
-
-# Cargo
-
-```{toml}
-[package]
-
-name = "hello_world"
-version = "0.0.1"
-authors = ["Your Name <someone@example.com>"]
-
-[dependencies.semver]
-
-git = "https://github.com/rust-lang/semver.git"
-```
-
-```{bash}
-$ cargo run
-    Updating git repository `https://github.com/rust-lang/semver.git`
-   Compiling semver v0.0.1 (https://github.com/rust-lang/semver.git#bf739419)
-   Compiling hello_world v0.0.1 (file:///home/you/projects/hello_world)
-     Running `target/hello_world`
-Hello, world!
-```
-
-# Zero Cost Abstraction
-
-```rust
+```{rust,ignore}
 fn main() {
-    let xs = [1, 2, 3, 4, 5];
+    let (tx, rx) = channel();
 
-    let mut xs = xs.iter()
-	           .map(|x| x + 1 )
-	           .filter(|x| x % 2i == 0 );
+    for i in range(0i, 10i) {
+        let tx = tx.clone();
+        spawn(proc() {
+            tx.send(i);
+        })
+    }
 
-    let xs: Vec<int> = xs.collect();
+    for _ in range(0i, 10i) {
+        let j = rx.recv();
+    }
+}
+```
+
+# Macros
+
+```{rust,ignore}
+fn main() {
+    let bad_query = sql!("SELECT * FORM users WHERE name = $1");
+}
+```
+
+```{notrust}
+error: Invalid syntax at position 10: syntax error at or near "FORM"
+let bad_query = sql!("SELECT * FORM users WEHRE name = $1");
+                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```
+
+# Macros
+
+```{rust,ignore}
+extern crate regex;
+use regex::Regex;
+
+fn main() {
+    let re = match Regex::new(r"^\d{4}-\d{2}-\d{2}$") {
+        Ok(re) => re,
+        Err(err) => panic!("{}", err),
+    };
+
+    assert_eq!(re.is_match("2014-01-01"), true);
+}
+```
+
+# FFI
+
+```
+extern crate libc;
+use libc::size_t;
+
+#[link(name = "snappy")]
+extern {
+    fn snappy_max_compressed_length(source_length: size_t) -> size_t;
+}
+
+fn main() {
+    let x = unsafe { snappy_max_compressed_length(100) };
+    println!("max compressed length of a 100 byte buffer: {}", x);
+}
+```
+
+# Embedding
+
+```
+#![no_std]
+#![feature(lang_items)]
+#![feature(intrinsics)]
+
+extern crate core;
+use core::str::StrSlice;
+
+#[lang = "stack_exhausted"] extern fn stack_exhausted() {}
+#[lang = "eh_personality"] extern fn eh_personality() {}
+#[lang = "panic_fmt"] extern fn panic_fmt() {}
+
+#[no_mangle]
+pub extern "C" fn hello_rust() -> *const u8 {
+    "Hello, world!\0".as_ptr()
 }
 ```
 
 # Thanks!
 
 ![rust logo](http://www.rust-lang.org/logos/rust-logo-256x256-blk.png)
-
-Rust makes low-level programming **accessible** to those who haven't done it, and
-**safer** for those who have.
 
 @steveklabnik
